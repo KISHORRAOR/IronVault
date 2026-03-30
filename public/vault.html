@@ -179,21 +179,36 @@ const enc = p  => CryptoJS.AES.encrypt(p, KEY).toString()
 const dec = c  => { try { return CryptoJS.AES.decrypt(c, KEY).toString(CryptoJS.enc.Utf8) || '(failed)' } catch { return '(failed)' } }
 
 // ── Token refresh helper ──────────────────────────────────────
+// ── API Base URL ─────────────────────────────────────────────
+const BASE_URL = "https://ironvault-rh8x.onrender.com/api"
+
+// ── Token refresh helper ─────────────────────────────────────
 async function apiFetch(url, opts = {}) {
   opts.headers = opts.headers || {}
-  opts.headers['authorization'] = IV.getToken()
-  let res = await fetch(url, opts)
+
+  opts.headers['authorization'] = 'Bearer ' + IV.getToken()
+
+  let res = await fetch(BASE_URL + url, opts)
+
   if (res.status === 401) {
-    const r = await fetch('/auth/refresh', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const r = await fetch(BASE_URL + '/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken: IV.getRefresh() })
     })
-    if (!r.ok) { logout(); return null }
+
+    if (!r.ok) {
+      logout()
+      return null
+    }
+
     const d = await r.json()
     IV.saveToken(d.token)
-    opts.headers['authorization'] = d.token
-    res = await fetch(url, opts)
+
+    opts.headers['authorization'] = 'Bearer ' + d.token
+    res = await fetch(BASE_URL + url, opts)
   }
+
   return res
 }
 
@@ -588,6 +603,7 @@ document.getElementById('importOverlay').addEventListener('click', e => { if(e.t
 
 // ── Init ──────────────────────────────────────────────────────
 load()
+window.onload = load
 </script>
 </body>
 </html>
