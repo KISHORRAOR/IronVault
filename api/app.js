@@ -17,13 +17,17 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"],   // ⭐ ADD THIS LINE
       styleSrc:   ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
       fontSrc:    ["'self'", "fonts.gstatic.com"],
-      connectSrc: ["'self'", "api.pwnedpasswords.com", "www.fast2sms.com"],
+      connectSrc: ["'self'", "https://ironvault-rh8x.onrender.com/", "api.pwnedpasswords.com", "www.fast2sms.com"],
       imgSrc:     ["'self'", "data:", "www.google.com", "https:"],
     }
   }
 }))
 
-app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }))
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
 app.use(express.json({ limit: '1mb' }))
 
 app.use(rateLimit({
