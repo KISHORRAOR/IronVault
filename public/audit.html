@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IronVault — Audit Log</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="vault-page">
+<nav class="vault-nav">
+  <div class="nav-brand">🔐 IronVault</div>
+  <div class="nav-actions">
+    <button class="btn btn-ghost btn-sm" onclick="location.href='/vault'">← Back to Vault</button>
+  </div>
+</nav>
+
+<div class="vault-body" style="max-width:900px">
+  <div style="margin-bottom:20px">
+    <h2 style="font-size:20px;font-weight:800;color:#fff">Audit Log</h2>
+    <p style="font-size:13px;color:var(--muted);margin-top:4px">All vault activity for the past 90 days</p>
+  </div>
+
+  <div class="audit-wrap">
+    <table class="audit-table">
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Detail</th>
+          <th>IP</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody id="auditBody">
+        <tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="pagination" style="display:flex;gap:8px;justify-content:center;margin-top:16px"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/js/utils.js"></script>
+<script>
+  //if (!IV.isAuth()) location.href = '/login'
+
+  async function loadLogs(page = 1) {
+  console.log("loadLogs called")
+  console.log("TOKEN:", IV.getToken())
+    try {
+      const res = await fetch(`/api/audit?page=${page}&limit=50`, {
+        headers: { Authorization: 'Bearer ' + IV.getToken() }
+      })
+      if (res.status === 401) { IV.clear(); location.href = '/login'; return }
+      const data = await res.json()
+      const tb = document.getElementById('auditBody')
+      if (!data.logs?.length) {
+        tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">No audit logs yet.</td></tr>'
+        return
+      }
+      tb.innerHTML = data.logs.map(l => `
+        <tr>
+          <td><span class="action-badge ${l.action}">${l.action.replace(/_/g,' ')}</span></td>
+          <td>${esc(l.detail) || '—'}</td>
+          <td style="font-family:var(--mono,monospace);font-size:12px">${esc(l.ip) || '—'}</td>
+          <td style="font-size:12px;color:var(--muted)">${new Date(l.createdAt).toLocaleString()}</td>
+        </tr>`).join('')
+
+      const pg = document.getElementById('pagination')
+      pg.innerHTML = ''
+      for (let i = 1; i <= data.pages; i++) {
+        const b = document.createElement('button')
+        b.className = 'btn btn-ghost btn-sm'
+        b.textContent = i
+        if (i === page) b.style.borderColor = 'var(--gold)'
+        b.onclick = () => loadLogs(i)
+        pg.appendChild(b)
+      }
+    } catch (e) {
+      document.getElementById('auditBody').innerHTML =
+        '<tr><td colspan="4" style="text-align:center;color:var(--red)">Failed to load logs.</td></tr>'
+    }
+  }
+
+  window.onload = () => {
+    loadLogs()
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IronVault — My Vault</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="vault-page">
+
+<!-- NAV -->
+<nav class="vault-nav">
+  <div class="nav-brand">🔐 IronVault</div>
+  <div class="nav-actions">
+    <button class="btn btn-ghost btn-sm" onclick="location.href='/audit.html'">Audit Log</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportVault()">Export</button>
+    <button class="btn btn-ghost btn-sm" onclick="openImport()">Import CSV</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleTheme()">🌙</button>
+    <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="vault-body">
+
+  <!-- SCORE BANNER -->
+  <div class="score-banner" id="scoreBanner">
+    <div class="score-ring good" id="scoreRing">—</div>
+    <div class="score-info">
+      <div class="score-title" id="scoreTitle">Calculating security score…</div>
+      <div class="score-sub"   id="scoreSub"></div>
+    </div>
+    <div class="score-stats">
+      <div class="stat">Total <b id="sTot">0</b></div>
+      <div class="stat green">Safe <b id="sSafe">—</b></div>
+      <div class="stat red">Breached <b id="sBreach">—</b></div>
+      <div class="stat amber">Weak <b id="sWeak">0</b></div>
+      <div class="stat" style="color:#ff6b35">Expired <b id="sExp">0</b></div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input id="searchInput" type="text" placeholder="Search sites, usernames, tags… (Ctrl+F)"
+             oninput="debounce()" onkeydown="if(event.key==='Escape'){this.value='';render()}">
+    </div>
+    <select class="filter-sel" id="catFilter" onchange="render()">
+      <option value="">All Categories</option>
+      <option>Personal</option><option>Work</option>
+      <option>Banking</option><option>Social</option><option>Other</option>
+    </select>
+    <select class="filter-sel" id="sortFilter" onchange="render()">
+      <option value="">Default Sort</option>
+      <option value="az">A → Z</option>
+      <option value="recent">Most Recent</option>
+      <option value="used">Last Used</option>
+    </select>
+    <button class="btn btn-danger btn-sm" id="bulkBtn" style="display:none" onclick="bulkDelete()">Delete Selected</button>
+    <button class="btn btn-primary btn-sm" onclick="openAdd()">+ Add &nbsp;<span class="hint">Ctrl+N</span></button>
+  </div>
+
+  <!-- GRID -->
+  <div class="cred-grid" id="grid"></div>
+  <div class="empty" id="empty">
+    <div class="empty-icon">🗄️</div>
+    <h3>Your vault is empty</h3>
+    <p>Click <b>+ Add</b> to store your first credential</p>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="addOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Credential</div>
+      <button class="modal-close" onclick="closeAdd()">×</button>
+    </div>
+
+    <input type="hidden" id="editId">
+    <div id="modalErr" class="msg error"></div>
+
+    <div class="fg"><label>Site Name *</label>
+      <input type="text" id="mSite" placeholder="e.g. GitHub, Gmail, Netflix">
+    </div>
+    <div class="fg"><label>Site URL</label>
+      <input type="url" id="mUrl" placeholder="https://example.com">
+    </div>
+    <div class="fg"><label>Username / Email *</label>
+      <input type="text" id="mUser" placeholder="username or email">
+    </div>
+    <div class="fg"><label>Password *</label>
+      <div class="gen-row">
+        <div class="pw-wrap">
+          <input type="password" id="mPw" placeholder="Enter or generate"
+                 oninput="checkStrength(this.value,'mb','mStr')">
+          <button class="eye" onclick="toggleEye('mPw',this)">👁</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="fillGen()">⚡ Generate</button>
+      </div>
+      <div class="strength-bars">
+        <div class="bar" id="mb1"></div><div class="bar" id="mb2"></div>
+        <div class="bar" id="mb3"></div><div class="bar" id="mb4"></div>
+      </div>
+      <div class="strength-label" id="mStr"></div>
+    </div>
+    <div class="fg"><label>Category</label>
+      <select id="mCat">
+        <option>Personal</option><option>Work</option>
+        <option>Banking</option><option>Social</option><option>Other</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Tags <span style="color:var(--dim);font-size:11px">(press Enter to add)</span></label>
+      <div class="tags-wrap" id="tagsWrap" onclick="document.getElementById('tagIn').focus()">
+        <input type="text" id="tagIn" placeholder="Add tag…" maxlength="20"
+               onkeydown="handleTag(event)">
+      </div>
+    </div>
+    <div class="fg"><label>Notes</label>
+      <textarea id="mNotes" rows="2" placeholder="Optional notes…"
+                oninput="this.value=this.value.slice(0,500);document.getElementById('nc').textContent=this.value.length+'/500'"></textarea>
+      <div class="char-count" id="nc">0/500</div>
+    </div>
+    <div class="fg" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="mSecure" style="width:16px;height:16px;accent-color:var(--gold)">
+      <label for="mSecure" style="margin:0;cursor:pointer;text-transform:none;font-size:13px;letter-spacing:0">
+        Mark as Secure Note (no password required)
+      </label>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAdd()">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveCredential()" style="width:auto;padding:10px 24px">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="overlay" id="importOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Import from CSV</div>
+      <button class="modal-close" onclick="closeImport()">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
+      CSV columns required: <code style="color:var(--gold)">siteName, username, password, category, notes</code>
+    </p>
+    <div class="fg">
+      <input type="file" id="csvFile" accept=".csv" style="padding:8px">
+    </div>
+    <div id="impErr" class="msg error"></div>
+    <div id="impOk"  class="msg success"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeImport()">Cancel</button>
+      <button class="btn btn-primary" onclick="processCSV()" style="width:auto;padding:10px 24px">Import</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/lib/crypto-js.min.js"></script>
+<script src="/js/utils.js"></script>
+<script>
+// ── Guard ────────────────────────────────────────────────────
+if (!requireAuth()) { /* redirected */ }
+
+// ── State ────────────────────────────────────────────────────
+let creds      = []
+let tags       = []
+let breachData = {}
+let debTimer   = null
+const INACTIVITY = 10 * 60 * 1000 // 10 min
+let inactTimer = null
+
+// ── Crypto ───────────────────────────────────────────────────
+const KEY = "5817d04e6a5233fd735456f4477c58b6"
+const enc = p  => CryptoJS.AES.encrypt(p, KEY).toString()
+const dec = c  => { try { return CryptoJS.AES.decrypt(c, KEY).toString(CryptoJS.enc.Utf8) || '(failed)' } catch { return '(failed)' } }
+
+// ── Token refresh helper ──────────────────────────────────────
+async function apiFetch(url, opts = {}) {
+  opts.headers = opts.headers || {}
+  opts.headers['authorization'] = IV.getToken()
+  let res = await fetch(url, opts)
+  if (res.status === 401) {
+    const r = await fetch('/auth/refresh', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: IV.getRefresh() })
+    })
+    if (!r.ok) { logout(); return null }
+    const d = await r.json()
+    IV.saveToken(d.token)
+    opts.headers['authorization'] = d.token
+    res = await fetch(url, opts)
+  }
+  return res
+}
+
+// ── Inactivity lock ───────────────────────────────────────────
+function resetTimer() {
+  clearTimeout(inactTimer)
+  inactTimer = setTimeout(() => {
+    toast('Vault locked due to inactivity.', 'info')
+    setTimeout(() => { IV.clear(); location.href = '/login' }, 1500)
+  }, INACTIVITY)
+}
+['mousemove','keydown','click','touchstart'].forEach(e => document.addEventListener(e, resetTimer))
+resetTimer()
+
+// ── Theme ────────────────────────────────────────────────────
+if (localStorage.getItem('iv_theme') === 'light') document.body.classList.add('light-mode')
+function toggleTheme() {
+  document.body.classList.toggle('light-mode')
+  localStorage.setItem('iv_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark')
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'n') { e.preventDefault(); openAdd() }
+  if (e.ctrlKey && e.key === 'f') { e.preventDefault(); document.getElementById('searchInput').focus() }
+  if (e.key === 'Escape') { closeAdd(); closeImport() }
+})
+
+// ── Logout ───────────────────────────────────────────────────
+async function logout() {
+  try { await apiFetch('/auth/logout', { method: 'POST' }) } catch {}
+  IV.clear(); location.href = '/login'
+}
+
+// ── Load credentials ──────────────────────────────────────────
+async function load() {
+  const res = await apiFetch('/credentials')
+  if (!res) return
+  const data = await res.json()
+  creds = data.credentials || []
+  render()
+  updateScore()
+  creds.forEach(c => breach(c))
+}
+
+// ── Filter & sort ────────────────────────────────────────────
+function debounce() { clearTimeout(debTimer); debTimer = setTimeout(render, 280) }
+
+function render() {
+  const q    = document.getElementById('searchInput').value.toLowerCase()
+  const cat  = document.getElementById('catFilter').value
+  const sort = document.getElementById('sortFilter').value
+
+  let list = creds.filter(c =>
+    (!q || c.siteName.toLowerCase().includes(q) || c.username.toLowerCase().includes(q) ||
+     (c.tags||[]).some(t => t.toLowerCase().includes(q))) &&
+    (!cat || c.category === cat)
+  )
+
+  if (sort === 'az')     list.sort((a,b) => a.siteName.localeCompare(b.siteName))
+  if (sort === 'recent') list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
+  if (sort === 'used')   list.sort((a,b) => {
+    if (!a.lastUsedAt && !b.lastUsedAt) return 0
+    if (!a.lastUsedAt) return 1; if (!b.lastUsedAt) return -1
+    return new Date(b.lastUsedAt) - new Date(a.lastUsedAt)
+  })
+
+  const grid  = document.getElementById('grid')
+  const empty = document.getElementById('empty')
+  grid.innerHTML = ''
+  if (!list.length) { empty.style.display = 'block'; return }
+  empty.style.display = 'none'
+
+  list.forEach(c => {
+    const expired = c.passwordChangedAt &&
+      (Date.now() - new Date(c.passwordChangedAt)) / 86400000 > 90
+    const plain = dec(c.encryptedPassword)
+    let weak = false
+    if (plain && plain !== '(failed)') {
+      let s = 0
+      if (plain.length>=8) s++; if (plain.length>=12) s++
+      if (/[A-Z]/.test(plain)) s++; if (/[a-z]/.test(plain)) s++
+      if (/[0-9]/.test(plain)) s++; if (/[^A-Za-z0-9]/.test(plain)) s++
+      weak = s <= 2
+    }
+    const br = breachData[c._id]
+    const brBadge = br === 'safe'     ? '<span class="badge safe">✓ Safe</span>'
+                  : br === 'breached' ? '<span class="badge breached">⚠ Breached</span>'
+                  :                     '<span class="badge checking">Checking…</span>'
+
+    let fav = ''
+    if (c.siteUrl) {
+      try { fav = `<img src="https://www.google.com/s2/favicons?sz=32&domain=${new URL(c.siteUrl).hostname}" alt="" onerror="this.style.display='none'">` }
+      catch {}
+    }
+    if (!fav) fav = '🌐'
+
+    const el = document.createElement('div')
+    el.className = 'cred-card' + (c._sel ? ' selected' : '')
+    el.dataset.id = c._id
+    el.innerHTML = `
+      <input type="checkbox" class="card-check" ${c._sel?'checked':''} onchange="toggleSel('${c._id}',this.checked)">
+      <div class="card-head">
+        <div class="favicon">${fav}</div>
+        <div class="card-meta">
+          <div class="card-site">${esc(c.siteName)}</div>
+          <div class="card-user">${esc(c.username)}</div>
+        </div>
+        <button class="fav-btn ${c.isFavourite?'on':''}" onclick="toggleFav('${c._id}')">${c.isFavourite?'★':'☆'}</button>
+      </div>
+      <div class="card-pw" id="pw-${c._id}">••••••••••</div>
+      <div class="card-badges">
+        ${brBadge}
+        ${expired ? '<span class="badge expired">⏰ 90d+ old</span>' : ''}
+        ${weak    ? '<span class="badge weak">🔓 Weak</span>'        : ''}
+        <span class="badge cat">${esc(c.category||'Personal')}</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-ghost btn-sm" onclick="showPw('${c._id}')">Show</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyPw('${c._id}')">Copy</button>
+        <button class="btn btn-ghost btn-sm" onclick="openEdit('${c._id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delCred('${c._id}')">Delete</button>
+      </div>`
+    grid.appendChild(el)
+  })
+}
+
+// ── Breach check (HIBP k-anonymity) ──────────────────────────
+async function breach(c) {
+  try {
+    const plain = dec(c.encryptedPassword)
+    if (!plain || plain === '(failed)') return
+    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(plain))
+    const hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase()
+    const res = await fetch('https://api.pwnedpasswords.com/range/' + hex.slice(0,5))
+    if (!res.ok) return
+    const match = (await res.text()).split('\n').find(l=>l.toUpperCase().startsWith(hex.slice(5)))
+    breachData[c._id] = match ? 'breached' : 'safe'
+    updateScore(); render()
+  } catch { breachData[c._id] = 'unknown' }
+}
+
+// ── Score ─────────────────────────────────────────────────────
+function updateScore() {
+  const tot  = creds.length
+  const weak = creds.filter(c => {
+    const p = dec(c.encryptedPassword); if (!p||p==='(failed)') return false
+    let s=0; if(p.length>=8)s++;if(p.length>=12)s++;if(/[A-Z]/.test(p))s++;if(/[a-z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++; return s<=2
+  }).length
+  const exp  = creds.filter(c => c.passwordChangedAt && (Date.now()-new Date(c.passwordChangedAt))/86400000 > 90).length
+  const safe = Object.values(breachData).filter(v=>v==='safe').length
+  const br   = Object.values(breachData).filter(v=>v==='breached').length
+  document.getElementById('sTot').textContent   = tot
+  document.getElementById('sWeak').textContent  = weak
+  document.getElementById('sExp').textContent   = exp
+  document.getElementById('sSafe').textContent  = safe || '—'
+  document.getElementById('sBreach').textContent= br || '—'
+  if (!tot) { document.getElementById('scoreTitle').textContent = 'Add credentials to see your score'; return }
+  let score = Math.max(0, Math.round(100 - (weak/tot)*40 - (exp/tot)*20 - (br/Math.max(tot,1))*40))
+  const ring = document.getElementById('scoreRing')
+  ring.textContent = score
+  ring.className = 'score-ring ' + (score>=80?'good':score>=50?'ok':'bad')
+  document.getElementById('scoreTitle').textContent =
+    score>=80 ? '✓ Your vault is in great shape!' :
+    score>=50 ? '~ Some passwords need attention.' : '⚠ Vault needs immediate attention!'
+  document.getElementById('scoreSub').textContent = `${weak} weak · ${exp} expired · ${br} breached`
+}
+
+// ── Show/copy password ────────────────────────────────────────
+const revealed = {}
+async function showPw(id) {
+  const el   = document.getElementById('pw-'+id)
+  const cred = creds.find(c=>c._id===id)
+  if (!cred) return
+  if (revealed[id]) { el.textContent='••••••••••'; el.style.letterSpacing='2px'; delete revealed[id]; return }
+  el.textContent = dec(cred.encryptedPassword)
+  el.style.letterSpacing = '0'
+  revealed[id] = true
+  await apiFetch('/credentials/'+id+'/used', { method:'PATCH' })
+  cred.lastUsedAt = new Date().toISOString()
+}
+
+async function copyPw(id) {
+  const cred = creds.find(c=>c._id===id)
+  if (!cred) return
+  const plain = dec(cred.encryptedPassword)
+  try {
+    await navigator.clipboard.writeText(plain)
+    toast('Password copied!', 'success')
+    await apiFetch('/credentials/'+id+'/used', { method:'PATCH' })
+    cred.lastUsedAt = new Date().toISOString()
+  } catch { toast('Copy failed.', 'error') }
+}
+
+// ── Favourite ─────────────────────────────────────────────────
+async function toggleFav(id) {
+  const res = await apiFetch('/credentials/'+id+'/favourite', { method:'PATCH' })
+  if (!res) return
+  const d = await res.json()
+  const c = creds.find(x=>x._id===id)
+  if (c) c.isFavourite = d.isFavourite
+  render()
+}
+
+// ── Delete ────────────────────────────────────────────────────
+async function delCred(id) {
+  const c = creds.find(x=>x._id===id)
+  if (!confirm(`Delete "${c?.siteName}"? Cannot be undone.`)) return
+  const res = await apiFetch('/credentials/'+id, { method:'DELETE' })
+  if (!res) return
+  if (res.ok) {
+    creds = creds.filter(x=>x._id!==id)
+    toast('Deleted.', 'success'); render(); updateScore()
+  } else toast('Delete failed.', 'error')
+}
+
+// ── Bulk select ───────────────────────────────────────────────
+function toggleSel(id, checked) {
+  const c = creds.find(x=>x._id===id)
+  if (c) c._sel = checked
+  document.getElementById('bulkBtn').style.display = creds.some(x=>x._sel) ? '' : 'none'
+}
+
+async function bulkDelete() {
+  const ids = creds.filter(c=>c._sel).map(c=>c._id)
+  if (!ids.length) return
+  if (!confirm(`Delete ${ids.length} credentials? Cannot be undone.`)) return
+  const res = await apiFetch('/credentials/bulk-delete', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ ids })
+  })
+  if (!res) return
+  if (res.ok) {
+    creds = creds.filter(c=>!ids.includes(c._id))
+    toast(`${ids.length} deleted.`, 'success')
+    render(); updateScore()
+    document.getElementById('bulkBtn').style.display = 'none'
+  }
+}
+
+// ── Add / Edit modal ──────────────────────────────────────────
+function openAdd() {
+  document.getElementById('modalTitle').textContent = 'Add Credential'
+  document.getElementById('editId').value = ''
+  ;['mSite','mUrl','mUser','mPw','mNotes'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('mCat').value    = 'Personal'
+  document.getElementById('mSecure').checked = false
+  document.getElementById('mStr').textContent = ''
+  ;[1,2,3,4].forEach(i => document.getElementById('mb'+i).className='bar')
+  hideMsg('modalErr')
+  document.getElementById('saveBtn').textContent = 'Save'
+  tags = []; renderTags()
+  document.getElementById('addOverlay').classList.add('open')
+  setTimeout(() => document.getElementById('mSite').focus(), 100)
+}
+
+function openEdit(id) {
+  const c = creds.find(x=>x._id===id)
+  if (!c) return
+  document.getElementById('modalTitle').textContent = 'Edit Credential'
+  document.getElementById('editId').value  = c._id
+  document.getElementById('mSite').value   = c.siteName
+  document.getElementById('mUrl').value    = c.siteUrl || ''
+  document.getElementById('mUser').value   = c.username
+  document.getElementById('mPw').value     = dec(c.encryptedPassword)
+  document.getElementById('mCat').value    = c.category || 'Personal'
+  document.getElementById('mNotes').value  = c.notes || ''
+  document.getElementById('mSecure').checked = c.isSecureNote || false
+  hideMsg('modalErr')
+  document.getElementById('saveBtn').textContent = 'Update'
+  tags = Array.isArray(c.tags) ? [...c.tags] : []
+  renderTags()
+  checkStrength(dec(c.encryptedPassword), 'mb', 'mStr')
+  document.getElementById('addOverlay').classList.add('open')
+}
+
+function closeAdd() { document.getElementById('addOverlay').classList.remove('open') }
+
+// ── Tags ──────────────────────────────────────────────────────
+function handleTag(e) {
+  if (e.key !== 'Enter' && e.key !== ',') return
+  e.preventDefault()
+  const v = e.target.value.trim().replace(/,/g,'')
+  if (v && !tags.includes(v) && tags.length < 8) { tags.push(v); renderTags() }
+  e.target.value = ''
+}
+
+function renderTags() {
+  const wrap = document.getElementById('tagsWrap')
+  const inp  = document.getElementById('tagIn')
+  wrap.innerHTML = ''
+  tags.forEach(t => {
+    const pill = document.createElement('span')
+    pill.className = 'tag-pill'; pill.textContent = t
+    pill.onclick = () => { tags = tags.filter(x=>x!==t); renderTags() }
+    wrap.appendChild(pill)
+  })
+  wrap.appendChild(inp)
+}
+
+// ── Generate password ─────────────────────────────────────────
+function fillGen() {
+  const p = generateSecurePassword()
+  document.getElementById('mPw').value = p
+  checkStrength(p, 'mb', 'mStr')
+}
+
+// ── Save credential ───────────────────────────────────────────
+async function saveCredential() {
+  const editId = document.getElementById('editId').value
+  const site   = document.getElementById('mSite').value.trim()
+  const url    = document.getElementById('mUrl').value.trim()
+  const user   = document.getElementById('mUser').value.trim()
+  const pw     = document.getElementById('mPw').value
+  const cat    = document.getElementById('mCat').value
+  const notes  = document.getElementById('mNotes').value.trim()
+  const secure = document.getElementById('mSecure').checked
+  const btn    = document.getElementById('saveBtn')
+  hideMsg('modalErr')
+
+  if (!site) { showMsg('modalErr', 'Site name is required.'); return }
+  if (!user) { showMsg('modalErr', 'Username is required.');  return }
+  if (!pw && !secure) { showMsg('modalErr', 'Password is required.'); return }
+
+  const encPw = pw ? enc(pw) : enc('(secure-note)')
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'
+
+  const method = editId ? 'PUT' : 'POST'
+  const endpoint = editId ? '/credentials/'+editId : '/credentials'
+  const res = await apiFetch(endpoint, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ siteName:site, siteUrl:url, username:user, encryptedPassword:encPw, category:cat, tags, notes, isSecureNote:secure })
+  })
+
+  if (!res) { btn.disabled=false; btn.innerHTML=editId?'Update':'Save'; return }
+  const data = await res.json()
+  if (res.ok) {
+    closeAdd(); toast(editId?'Updated!':'Saved!', 'success'); await load()
+  } else { showMsg('modalErr', data.message) }
+  btn.disabled = false; btn.innerHTML = editId ? 'Update' : 'Save'
+}
+
+// ── Export ────────────────────────────────────────────────────
+async function exportVault() {
+  const res = await apiFetch('/credentials/export')
+  if (!res) return
+  const data = await res.json()
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)], {type:'application/json'}))
+  a.download = `ironvault-export-${new Date().toISOString().slice(0,10)}.json`
+  a.click()
+  toast('Vault exported!', 'success')
+}
+
+// ── Import CSV ────────────────────────────────────────────────
+function openImport() { document.getElementById('importOverlay').classList.add('open') }
+function closeImport() { document.getElementById('importOverlay').classList.remove('open') }
+
+async function processCSV() {
+  const file = document.getElementById('csvFile').files[0]
+  hideMsg('impErr'); hideMsg('impOk')
+  if (!file) { showMsg('impErr', 'Select a CSV file first.'); return }
+  const lines = (await file.text()).trim().split('\n')
+  if (lines.length < 2) { showMsg('impErr', 'CSV is empty or invalid.'); return }
+  const h = lines[0].split(',').map(x=>x.trim().toLowerCase())
+  const si=h.indexOf('sitename'), ui=h.indexOf('username'), pi=h.indexOf('password')
+  const ci=h.indexOf('category'), ni=h.indexOf('notes')
+  if (si<0||ui<0||pi<0) { showMsg('impErr', 'CSV must have: siteName, username, password columns.'); return }
+  let ok=0, fail=0
+  for (let i=1;i<lines.length;i++) {
+    const cols = lines[i].split(',').map(c=>c.trim().replace(/^"|"$/g,''))
+    if (!cols[si]||!cols[ui]||!cols[pi]) { fail++; continue }
+    const res = await apiFetch('/credentials', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        siteName:cols[si], username:cols[ui], encryptedPassword:enc(cols[pi]),
+        category: ci>=0&&cols[ci]?cols[ci]:'Personal',
+        notes: ni>=0?cols[ni]||'':''
+      })
+    })
+    if (res?.ok) ok++; else fail++
+  }
+  showMsg('impOk', `✓ Imported ${ok}${fail?` (${fail} skipped)`:''}`, 'success')
+  await load()
+  setTimeout(closeImport, 2500)
+}
+
+// ── Click outside modal to close ─────────────────────────────
+document.getElementById('addOverlay').addEventListener('click', e => { if(e.target===e.currentTarget)closeAdd() })
+document.getElementById('importOverlay').addEventListener('click', e => { if(e.target===e.currentTarget)closeImport() })
+
+// ── Init ──────────────────────────────────────────────────────
+load()
+</script>
+</body>
+</html>

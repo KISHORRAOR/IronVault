@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IronVault — Login</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-mark">🔐</div>
+      <h1>IronVault</h1>
+      <p>Enter your credentials to unlock</p>
+    </div>
+
+    <div id="errMsg"  class="msg error"></div>
+    <div id="warnMsg" class="msg warn"></div>
+
+    <div class="fg">
+      <label>Mobile Number</label>
+      <input type="tel" id="mobile" placeholder="10-digit mobile" maxlength="10" inputmode="numeric"
+             onkeydown="if(event.key==='Enter')login()">
+    </div>
+    <div class="fg">
+      <label>Master Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="pw" placeholder="Your master password"
+               onkeydown="if(event.key==='Enter')login()">
+        <button class="eye" onclick="toggleEye('pw',this)">👁</button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="loginBtn" onclick="login()">Unlock Vault</button>
+
+    <div class="link-row" style="margin-top:14px">
+      <a href="/forgot">Forgot password?</a> &nbsp;·&nbsp; <a href="/unlock">Unlock account</a>
+    </div>
+    <div class="link-row">New here? <a href="/register">Create vault</a></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/js/utils.js"></script>
+<script>
+  if (IV.isAuth()) location.href = '/vault'
+
+  async function login() {
+    const mobile = document.getElementById('mobile').value.trim()
+    const pw     = document.getElementById('pw').value
+    const btn    = document.getElementById('loginBtn')
+    hideMsg('errMsg'); hideMsg('warnMsg')
+
+    if (!validMobile(mobile)) { showMsg('errMsg', 'Enter a valid 10-digit Indian mobile number.'); return }
+    if (!pw) { showMsg('errMsg', 'Enter your master password.'); return }
+
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> Unlocking…'
+
+    try {
+      const res  = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, masterPassword: pw })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        IV.saveToken(data.token)
+        IV.saveRefresh(data.refreshToken)
+        IV.saveKey(pw)
+        toast('Welcome back!', 'success')
+        setTimeout(() => location.href = '/vault', 600)
+      } else {
+        showMsg('errMsg', data.message, 'error')
+        if (data.attemptsLeft !== undefined)
+          showMsg('warnMsg', `⚠ ${data.attemptsLeft} attempt${data.attemptsLeft===1?'':'s'} left before lockout.`, 'warn')
+        if (data.locked)
+          setTimeout(() => location.href = '/unlock', 1800)
+      }
+    } catch (e) {
+      showMsg('errMsg', 'Cannot reach server. Is it running?', 'error')
+    }
+    btn.disabled = false
+    btn.innerHTML = 'Unlock Vault'
+  }
+</script>
+</body>
+</html>
