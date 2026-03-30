@@ -217,7 +217,7 @@ function resetTimer() {
   clearTimeout(inactTimer)
   inactTimer = setTimeout(() => {
     toast('Vault locked due to inactivity.', 'info')
-    setTimeout(() => { IV.clear(); location.href = '/login' }, 1500)
+    setTimeout(() => { IV.clear(); location.href = '/login.html' }, 1500)
   }, INACTIVITY)
 }
 ['mousemove','keydown','click','touchstart'].forEach(e => document.addEventListener(e, resetTimer))
@@ -240,7 +240,7 @@ document.addEventListener('keydown', e => {
 // ── Logout ───────────────────────────────────────────────────
 async function logout() {
   try { await apiFetch('/auth/logout', { method: 'POST' }) } catch {}
-  IV.clear(); location.href = '/login'
+  IV.clear(); location.href = '/login.html'
 }
 
 // ── Load credentials ──────────────────────────────────────────

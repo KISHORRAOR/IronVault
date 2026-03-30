@@ -50,7 +50,7 @@
       <button class="btn btn-primary" id="unlockBtn" onclick="unlockAcc()">Unlock Account</button>
     </div>
 
-    <div class="link-row"><a href="/login">← Back to Login</a></div>
+    <div class="link-row"><a href="/login.html">← Back to Login</a></div>
   </div>
 </div>
 
@@ -102,7 +102,7 @@
       const data = await res.json()
       if (res.ok) {
         showMsg('s2Ok', '✓ Account unlocked! Redirecting…', 'success')
-        setTimeout(() => location.href = '/login', 2000)
+        setTimeout(() => location.href = '/login.html', 2000)
       } else { showMsg('s2Err', data.message) }
     } catch (e) { showMsg('s2Err', 'Cannot reach server.') }
     btn.disabled = false; btn.innerHTML = 'Unlock Account'

@@ -59,7 +59,7 @@
     btn.innerHTML = '<span class="spinner"></span> Unlocking…'
 
     try {
-      const res  = await fetch('/auth/login', {
+      const res  = await fetch('https://ironvault-rh8x.onrender.com/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile, masterPassword: pw })

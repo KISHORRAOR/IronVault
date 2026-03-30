@@ -97,6 +97,6 @@ function validMobile(m) { return /^[6-9]\d{9}$/.test(m) }
 
 // ── Auth guard ────────────────────────────────────────────────
 function requireAuth() {
-  if (!IV.isAuth()) { window.location.href = '/login'; return false }
+  if (!IV.isAuth()) { window.location.href = '/login.html'; return false }
   return true
 }
