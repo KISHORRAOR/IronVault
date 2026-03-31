@@ -39,8 +39,8 @@ app.use(rateLimit({
 const publicDir = path.join(__dirname, '..', 'public')
 app.use(express.static(publicDir))
 
-app.use('/auth',        require('./routes/auth'))
-app.use('/credentials', require('./routes/credentials'))
+app.use('/api/auth',        require('./routes/auth'))
+app.use('/api/credentials', require('./routes/credentials'))
 app.use('/api/audit',  require('./routes/audit'))
 
 app.get('/vault',    (_, res) => res.sendFile(path.join(publicDir, 'vault.html')))

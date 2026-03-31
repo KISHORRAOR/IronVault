@@ -63,7 +63,7 @@
 <div class="toast" id="toast"></div>
 <script src="/js/utils.js"></script>
 <script>
-  if (IV.isAuth()) location.href = '/vault'
+  if (IV.isAuth()) location.href = '/vault.html'
 
   async function sendOTP() {
     const mobile = document.getElementById('mobile').value.trim()
@@ -75,7 +75,7 @@
     btn.innerHTML = '<span class="spinner"></span>'
 
     try {
-      const res  = await fetch('/auth/send-register-otp', {
+      const res  = await fetch('https://ironvault-rh8x.onrender.com/auth/send-register-otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile })
       })
@@ -115,7 +115,7 @@
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating…'
 
     try {
-      const res  = await fetch('/auth/register', {
+      const res  = await fetch('https://ironvault-rh8x.onrender.com/auth/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile, otp, masterPassword: pw })
       })

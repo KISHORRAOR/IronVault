@@ -64,7 +64,7 @@
     const btn = document.getElementById('otpBtn')
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'
     try {
-      const res  = await fetch('/auth/send-unlock-otp', {
+      const res  = await fetch('https://ironvault-rh8x.onrender.com/api/auth/send-unlock-otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile })
       })
@@ -95,7 +95,7 @@
     if (pw !== cpw)               { showMsg('s2Err', 'Passwords do not match.'); return }
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Unlocking…'
     try {
-      const res  = await fetch('/auth/unlock', {
+      const res  = await fetch('https://ironvault-rh8x.onrender.com/api/auth/unlock', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile, otp, newPassword: pw })
       })

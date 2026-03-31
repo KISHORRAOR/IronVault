@@ -56,7 +56,7 @@
       <button class="btn btn-primary" id="resetBtn" onclick="resetPw()">Reset Password</button>
     </div>
 
-    <div class="link-row"><a href="/login">← Back to Login</a></div>
+    <div class="link-row"><a href="/login.html">← Back to Login</a></div>
   </div>
 </div>
 
@@ -70,7 +70,7 @@
     const btn = document.getElementById('otpBtn')
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'
     try {
-      const res  = await fetch('/auth/send-reset-otp', {
+      const res  = await fetch('https://ironvault-rh8x.onrender.com/api/auth/send-reset-otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile })
       })
@@ -101,14 +101,14 @@
     if (pw !== cpw)               { showMsg('s2Err', 'Passwords do not match.'); return }
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Resetting…'
     try {
-      const res  = await fetch('/auth/reset-password', {
+      const res  = await fetch('https://ironvault-rh8x.onrender.com/api/auth/reset-password', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile, otp, newPassword: pw })
       })
       const data = await res.json()
       if (res.ok) {
         showMsg('s2Ok', '✓ Password reset! Redirecting…', 'success')
-        setTimeout(() => location.href = '/login', 2000)
+        setTimeout(() => location.href = '/login.html', 2000)
       } else { showMsg('s2Err', data.message) }
     } catch (e) { showMsg('s2Err', 'Cannot reach server.') }
     btn.disabled = false; btn.innerHTML = 'Reset Password'

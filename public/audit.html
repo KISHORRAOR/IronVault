@@ -10,7 +10,7 @@
 <nav class="vault-nav">
   <div class="nav-brand">🔐 IronVault</div>
   <div class="nav-actions">
-    <button class="btn btn-ghost btn-sm" onclick="location.href='/vault'">← Back to Vault</button>
+    <button class="btn btn-ghost btn-sm" onclick="location.href='/vault.html'">← Back to Vault</button>
   </div>
 </nav>
 
@@ -41,16 +41,16 @@
 <div class="toast" id="toast"></div>
 <script src="/js/utils.js"></script>
 <script>
-  //if (!IV.isAuth()) location.href = '/login'
+  //if (!IV.isAuth()) location.href = '/login.html'
 
   async function loadLogs(page = 1) {
   console.log("loadLogs called")
   console.log("TOKEN:", IV.getToken())
     try {
-      const res = await fetch(`/api/audit?page=${page}&limit=50`, {
+      const res = await fetch(`https://ironvault-rh8x.onrender.com/api/audit?page=${page}&limit=50`, {
         headers: { Authorization: 'Bearer ' + IV.getToken() }
       })
-      if (res.status === 401) { IV.clear(); location.href = '/login'; return }
+      if (res.status === 401) { IV.clear(); location.href = '/login.html'; return }
       const data = await res.json()
       const tb = document.getElementById('auditBody')
       if (!data.logs?.length) {
