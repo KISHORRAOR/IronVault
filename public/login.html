@@ -60,7 +60,7 @@
 
     try {
       const res  = await 
-      fetch('https://ironvault-rh8x.onrender.com/auth/login?v=2', {
+      fetch('https://ironvault-rh8x.onrender.com/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile, masterPassword: pw })

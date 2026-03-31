@@ -396,11 +396,17 @@ async function copyPw(id) {
   if (!cred) return
   const plain = dec(cred.encryptedPassword)
   try {
-    await navigator.clipboard.writeText(plain)
-    toast('Password copied!', 'success')
-    await apiFetch('/credentials/'+id+'/used', { method:'PATCH' })
-    cred.lastUsedAt = new Date().toISOString()
-  } catch { toast('Copy failed.', 'error') }
+  await navigator.clipboard.writeText(plain)
+  toast('Password copied!', 'success')
+
+  // separate try for API (IMPORTANT)
+  try {
+    await apiFetch(`/credentials/${id}/used`, { method: 'PATCH' })
+  } catch {}
+}
+catch {
+  toast('Copy failed.', 'error')
+}
 }
 
 // ── Favourite ─────────────────────────────────────────────────

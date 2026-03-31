@@ -75,7 +75,7 @@
     btn.innerHTML = '<span class="spinner"></span>'
 
     try {
-      const res  = await fetch('https://ironvault-rh8x.onrender.com/auth/send-register-otp', {
+      const res  = await fetch('/auth/send-register-otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile })
       })
