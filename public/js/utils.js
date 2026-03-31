@@ -1,3 +1,7 @@
+const BASE_URL = "https://ironvault-rh8x.onrender.com/api"
+async function apiFetch(url, opts = {} ) {
+ return fetch(BASE_URL + url, opts)
+}
 // ── Token management ─────────────────────────────────────────
 window.IV = {
   saveToken:    t  => sessionStorage.setItem('iv_token', t),
