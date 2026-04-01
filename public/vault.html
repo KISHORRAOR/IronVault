@@ -238,7 +238,7 @@ document.addEventListener('keydown', e => {
 })
 
 // ── Logout ───────────────────────────────────────────────────
-async function logout() {
+window.logout = async function() {
   try { await apiFetch('/auth/logout', { method: 'POST' }) } catch {}
   IV.clear(); location.href = '/login.html'
 }
