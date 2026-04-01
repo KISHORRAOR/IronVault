@@ -246,7 +246,7 @@ async function logout() {
 // ── Load credentials ──────────────────────────────────────────
 async function load() {
   const res = await apiFetch('/credentials')
-  if (!res) return
+  if (!res || !res.ok) return
   const data = await res.json()
   creds = data.credentials || []
   render()
@@ -387,7 +387,7 @@ async function showPw(id) {
   el.textContent = dec(cred.encryptedPassword)
   el.style.letterSpacing = '0'
   revealed[id] = true
-  await apiFetch('/credentials/'+id+'/used', { method:'PATCH' })
+  await apiFetch(`/credentials/id}/used`, { method:'PATCH' })
   cred.lastUsedAt = new Date().toISOString()
 }
 
@@ -411,7 +411,7 @@ catch {
 
 // ── Favourite ─────────────────────────────────────────────────
 async function toggleFav(id) {
-  const res = await apiFetch('/credentials/'+id+'/favourite', { method:'PATCH' })
+  const res = await apiFetch(`/credentials/${id}/favourite`, { method:'PATCH' })
   if (!res) return
   const d = await res.json()
   const c = creds.find(x=>x._id===id)
@@ -423,7 +423,7 @@ async function toggleFav(id) {
 async function delCred(id) {
   const c = creds.find(x=>x._id===id)
   if (!confirm(`Delete "${c?.siteName}"? Cannot be undone.`)) return
-  const res = await apiFetch('/credentials/'+id, { method:'DELETE' })
+  const res = await apiFetch(`/credentials/${id}`, { method:'DELETE' })
   if (!res) return
   if (res.ok) {
     creds = creds.filter(x=>x._id!==id)
@@ -442,7 +442,7 @@ async function bulkDelete() {
   const ids = creds.filter(c=>c._sel).map(c=>c._id)
   if (!ids.length) return
   if (!confirm(`Delete ${ids.length} credentials? Cannot be undone.`)) return
-  const res = await apiFetch('/credentials/bulk-delete', {
+  const res = await apiFetch(`/credentials/bulk-delete`, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ ids })
   })

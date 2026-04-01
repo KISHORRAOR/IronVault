@@ -60,7 +60,7 @@
 
     try {
       const res  = await 
-      apiFetch('/auth/login', {
+      apiFetch(BASE_URL+'/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile, masterPassword: pw })
