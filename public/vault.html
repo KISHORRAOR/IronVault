@@ -180,13 +180,13 @@ const dec = c  => { try { return CryptoJS.AES.decrypt(c, KEY).toString(CryptoJS.
 
 // ── Token refresh helper ──────────────────────────────────────
 // ── API Base URL ─────────────────────────────────────────────
-const BASE_URL = "https://ironvault-rh8x.onrender.com/api"
+const BASE_URL = "https://ironvault-rh8x.onrender.com"
 
 // ── Token refresh helper ─────────────────────────────────────
 async function apiFetch(url, opts = {}) {
-  opts.headers = opts.headers || {}
+  opts.headers = { ....(opts.headers || {})}
 
-  opts.headers['authorization'] = 'Bearer ' + IV.getToken()
+  opts.headers['Authorization'] = 'Bearer ' + IV.getToken()
 
   let res = await fetch(BASE_URL + url, opts)
 
@@ -205,7 +205,7 @@ async function apiFetch(url, opts = {}) {
     const d = await r.json()
     IV.saveToken(d.token)
 
-    opts.headers['authorization'] = 'Bearer ' + d.token
+    opts.headers['Authorization'] = 'Bearer ' + d.token
     res = await fetch(BASE_URL + url, opts)
   }
 
@@ -387,7 +387,7 @@ async function showPw(id) {
   el.textContent = dec(cred.encryptedPassword)
   el.style.letterSpacing = '0'
   revealed[id] = true
-  await apiFetch(`/credentials/id}/used`, { method:'PATCH' })
+  await apiFetch(`/credentials/${id}/used`, { method:'PATCH' })
   cred.lastUsedAt = new Date().toISOString()
 }
 
@@ -608,7 +608,6 @@ document.getElementById('addOverlay').addEventListener('click', e => { if(e.targ
 document.getElementById('importOverlay').addEventListener('click', e => { if(e.target===e.currentTarget)closeImport() })
 
 // ── Init ──────────────────────────────────────────────────────
-load()
 window.onload = load
 </script>
 </body>
