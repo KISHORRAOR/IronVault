@@ -1,6 +1,13 @@
 const BASE_URL = "https://ironvault-rh8x.onrender.com/api"
-async function apiFetch(url, opts = {} ) {
- return fetch(BASE_URL + url, opts)
+async function apiFetch(url, opts = {}) {
+  opts.headers = { ...(opts.headers || {}) }
+
+  const token = IV.getToken()
+  if (token) {
+    opts.headers['Authorization'] = 'Bearer ' + token
+  }
+
+  return fetch(BASE_URL + url, opts)
 }
 // ── Token management ─────────────────────────────────────────
 window.IV = {

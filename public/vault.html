@@ -178,40 +178,6 @@ const KEY = "5817d04e6a5233fd735456f4477c58b6"
 const enc = p  => CryptoJS.AES.encrypt(p, KEY).toString()
 const dec = c  => { try { return CryptoJS.AES.decrypt(c, KEY).toString(CryptoJS.enc.Utf8) || '(failed)' } catch { return '(failed)' } }
 
-// ── Token refresh helper ──────────────────────────────────────
-// ── API Base URL ─────────────────────────────────────────────
-const BASE_URL = "https://ironvault-rh8x.onrender.com/api"
-
-// ── Token refresh helper ─────────────────────────────────────
-async function apiFetch(url, opts = {}) {
-  opts.headers = { ...(opts.headers || {}) }
-
-  opts.headers['Authorization'] = 'Bearer ' + IV.getToken()
-
-  let res = await fetch(BASE_URL + url, opts)
-
-  if (res.status === 401) {
-    const r = await fetch(BASE_URL + '/auth/refresh', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: IV.getRefresh() })
-    })
-
-    if (!r.ok) {
-      logout()
-      return null
-    }
-
-    const d = await r.json()
-    IV.saveToken(d.token)
-
-    opts.headers['Authorization'] = 'Bearer ' + d.token
-    res = await fetch(BASE_URL + url, opts)
-  }
-
-  return res
-}
-
 // ── Inactivity lock ───────────────────────────────────────────
 function resetTimer() {
   clearTimeout(inactTimer)
