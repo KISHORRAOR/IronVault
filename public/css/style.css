@@ -444,6 +444,7 @@ textarea { resize: vertical; line-height: 1.5; }
   width: 17px; height: 17px;
   accent-color: var(--gold);
   cursor: pointer;
+  z-index:2;
 }
 
 .card-head {
@@ -452,6 +453,7 @@ textarea { resize: vertical; line-height: 1.5; }
   gap: 12px;
   margin-bottom: 12px;
   padding-right: 24px;
+  position:relative;
 }
 
 .favicon {
@@ -481,7 +483,16 @@ textarea { resize: vertical; line-height: 1.5; }
   cursor: pointer; font-size: 16px;
   color: var(--muted); padding: 2px;
   transition: color 0.15s; flex-shrink: 0;
+  position: absolute;
+  top: 14px;
+  right: 40px;   /* ← move left from checkbox */
+  z-index: 3;
 }
+
+.fav-btn:active {
+transform:scale(0.9);
+}
+
 .fav-btn.on { color: var(--gold); }
 
 .card-pw {
