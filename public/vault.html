@@ -190,10 +190,10 @@ function resetTimer() {
 resetTimer()
 
 // ── Theme ────────────────────────────────────────────────────
-if (localStorage.getItem('iv_theme') === 'light') document.body.classList.add('light-mode')
+if (localStorage.getItem('iv_theme') === 'light') document.body.classList.add('light')
 function toggleTheme() {
-  document.body.classList.toggle('light-mode')
-  localStorage.setItem('iv_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark')
+  document.body.classList.toggle('light')
+  localStorage.setItem('iv_theme', document.body.classList.contains('light') ? 'light' : 'dark')
 }
 
 // ── Keyboard shortcuts ────────────────────────────────────────
