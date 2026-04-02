@@ -665,3 +665,33 @@ textarea { resize: vertical; line-height: 1.5; }
   .modal { padding: 22px; }
   .nav-actions .btn-ghost { display: none; }
 }
+
+/* ── LIGHT THEME ───────────────────────── */
+
+body.light {
+  --bg:       #f5f6fa;
+  --surface:  #ffffff;
+  --surface2: #f1f3f8;
+  --surface3: #e7eaf3;
+  --border:   #dcdfea;
+  --border2:  #cfd3e0;
+  --text:     #1a1c25;
+  --muted:    #6b7094;
+  --dim:      #8a8fa8;
+
+  --gold:     #b8942e;
+  --gold2:    #d4b04c;
+  --goldbg:   rgba(184,148,46,0.08);
+  --goldbdr:  rgba(184,148,46,0.25);
+
+  --red:      #d94b5a;
+  --redbg:    rgba(217,75,90,0.08);
+  --redbdr:   rgba(217,75,90,0.25);
+
+  --green:    #3fa374;
+  --greenbg:  rgba(63,163,116,0.08);
+  --greenbdr: rgba(63,163,116,0.25);
+
+  --amber:    #d98c2e;
+  --amberbg:  rgba(217,140,46,0.08);
+}
