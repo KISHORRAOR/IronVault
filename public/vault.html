@@ -381,7 +381,7 @@ async function toggleFav(id) {
   if (!res) return
   const d = await res.json()
   const c = creds.find(x=>x._id===id)
-  if (c) c.isFavourite = d.isFavourite
+  if (c) c.isFavourite = d.isFavourite ?? d.isFavorite
   render()
 }
 

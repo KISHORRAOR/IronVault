@@ -479,7 +479,7 @@ textarea { resize: vertical; line-height: 1.5; }
 .fav-btn {
   background: none; border: none;
   cursor: pointer; font-size: 16px;
-  color: var(--dim); padding: 2px;
+  color: var(--muted); padding: 2px;
   transition: color 0.15s; flex-shrink: 0;
 }
 .fav-btn.on { color: var(--gold); }
@@ -493,6 +493,10 @@ textarea { resize: vertical; line-height: 1.5; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.fav-btn:hover {
+  color: var(--gold);
 }
 
 .card-badges {
